@@ -43,7 +43,7 @@ def create_react_agent():
         Tool(
             name="searxng_search",
             func=searxng_search,
-            description="使用 SearxNG 搜尋資訊（請以繁體中文回覆）",
+            description="當你不確定答案、或使用者問的是最新資訊、網頁、教學、價格等，請使用此工具查詢（請用繁體中文回覆）",
         )
     ]
 
