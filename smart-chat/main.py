@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from agent.tool_agent import create_tool_agent
 from agent.summarize_agent import generate_summary
-from agent.chat_agent import respond_with_summary_context, use_tool_agent
+from agent.chat_agent import respond_with_summary_context
 
 app = FastAPI()
 
