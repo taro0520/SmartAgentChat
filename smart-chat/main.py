@@ -1,29 +1,44 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from llm_setup import llm
-from agent_setup import create_agent
-from langchain.chains import RetrievalQA
+from agent.tool_agent import create_tool_agent
+from agent.summarize_agent import generate_summary
+from agent.chat_agent import respond_with_summary_context, use_tool_agent
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = ["*"],
-    allow_methods = ["*"],
-    allow_headers = ["*"],
-    allow_credentials = True,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
 )
 
-class ChatRequest(BaseModel):
-    query : str
+user_message_history = []
+ai_message_history = []
 
-def run_agent(query):
-    agent = create_agent()
-    return agent.run(query)
+class ChatRequest(BaseModel):
+    query: str
 
 @app.post("/api/chat")
-def chat(request : ChatRequest):
+def chat(request: ChatRequest):
     query = request.query
-    reply = run_agent(query)
-    return {"response" : reply}
+
+    # update history
+    user_message_history.append(query)
+    if len(user_message_history) > 5:
+        user_message_history.pop(0)
+
+    # get summary
+    user_summary = generate_summary("使用者", user_message_history)
+    ai_summary = generate_summary("AI", ai_message_history)
+
+    # send message and get reply
+    reply = respond_with_summary_context(user_summary, ai_summary, query)
+
+    ai_message_history.append(reply)
+    if len(ai_message_history) > 5:
+        ai_message_history.pop(0)
+        
+    return {"user_summary": user_summary, "ai_summary": ai_summary,"response": reply}
