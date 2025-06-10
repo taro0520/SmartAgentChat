@@ -76,5 +76,6 @@ def end_chat(request: ChatRequest):
     token = request.token
     user_histories.pop(token, None)
     ai_histories.pop(token, None)
+    save_histories({"user": user_histories, "ai": ai_histories})
     return {"status": "ended"}
 
