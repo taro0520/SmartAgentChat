@@ -33,19 +33,25 @@
     </header>
 
     <main class="flex-1 flex flex-col justify-between items-center px-4 pt-10 pb-4">
-      <div class="w-full max-w-4xl flex flex-col space-y-4">
-        <div
-          v-for="(msg, index) in messages"
-          :key="index"
-          :class="[
-            'rounded-lg p-4 max-w-lg w-full whitespace-pre-wrap',
+      <div ref="messageContainer" class="w-full max-w-4xl flex flex-col space-y-4 overflow-y-auto flex-1 mb-28"
+        style="max-height: calc(100vh - 250px);">
+        <div v-for="(msg, index) in messages" :key="index" :class="[
+          'max-w-4xl w-full whitespace-pre-wrap flex items-start space-x-2',
+          msg.role === 'user' ? 'justify-end' : 'justify-start'
+        ]">
+
+          <img v-if="msg.role !== 'user'" src="https://i.pravatar.cc/40?u=agent" alt="Agent Avatar"
+            class="w-12 h-12 rounded-full border-2 border-white shadow mr-1" />
+
+          <div :class="[
+            'rounded-lg p-4 max-w-lg whitespace-pre-wrap',
             msg.role === 'user'
-              ? 'self-end bg-indigo-400 text-white text-left'
-              : 'self-start bg-gray-200 text-gray-800 text-left'
-          ]"
-        >
-          <strong>{{ msg.role === 'user' ? '你' : 'Agent' }}：</strong>
-          {{ msg.content }}
+              ? 'bg-indigo-400 text-white text-left'
+              : 'bg-gray-200 text-gray-800 text-left'
+          ]">{{ msg.content }}</div>
+
+          <img v-if="msg.role === 'user'" src="https://i.pravatar.cc/40?u=user" alt="User Avatar"
+            class="w-12 h-12 rounded-full border-2 border-white shadow ml-2" />
         </div>
       </div>
 
@@ -58,12 +64,8 @@
             </svg>
           </button>
 
-          <input
-          v-model="messageInput"
-          @keyup.enter="sendMessage"
-          placeholder="輸入訊息..."
-          class="flex-1 bg-transparent focus:outline-none text-lg"
-        />
+          <input v-model="messageInput" @keyup.enter="sendMessage" placeholder="輸入訊息..."
+            class="flex-1 bg-transparent focus:outline-none text-lg" />
           <button @click="sendMessage"
             class="text-white bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-full text-sm font-semibold disabled:opacity-50">
             {{ canSend ? '送出' : `${cooldown} 秒...` }}
@@ -102,22 +104,26 @@ const messageInput = ref('');
 const canSend = ref(true);
 const cooldown = ref(0);
 let cooldownTimer = null;
-const chatContainer = ref(null);
+const messageContainer = ref('');
 
 function toggleDropdown() {
   dropdownOpen.value = !dropdownOpen.value;
 }
+
 function toggleSidebar() {
   sidebarOpen.value = !sidebarOpen.value;
 }
+
 function handleLogout() {
   localStorage.removeItem("auth");
   router.push({ name: "login" });
 }
+
 function goToSettings() {
   alert("Go to settings");
   dropdownOpen.value = false;
 }
+
 function handleClickOutside(event) {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
     dropdownOpen.value = false;
@@ -132,7 +138,6 @@ onBeforeUnmount(() => {
   if (cooldownTimer) clearInterval(cooldownTimer);
 });
 
-// ✅ 傳送訊息
 async function sendMessage() {
   const message = messageInput.value.trim();
   if (!message || !canSend.value) return;
@@ -155,7 +160,7 @@ async function sendMessage() {
   scrollToBottom();
 
   try {
-    const res = await fetch('http://127.0.0.1:8000/api/chat', {
+    const res = await fetch('http://108.61.126.125:8000/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -183,13 +188,13 @@ async function sendMessage() {
 }
 
 function scrollToBottom() {
-  const el = chatContainer.value;
+  const el = messageContainer.value;
   if (el) {
     el.scrollTop = el.scrollHeight;
   }
 }
-</script>
 
+</script>
 
 <style>
 .slide-enter-active,
