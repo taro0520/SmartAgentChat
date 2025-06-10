@@ -17,7 +17,7 @@
 
       <div class="relative" ref="dropdownRef">
         <button @click="toggleDropdown" class="flex items-center space-x-2 focus:outline-none">
-          <img src="https://i.pravatar.cc/40" class="w-12 h-12 rounded-full border-2 border-white shadow" alt="Avatar" />
+          <img src="https://i.pravatar.cc/40?u=e" class="w-12 h-12 rounded-full border-2 border-white shadow" alt="Avatar" />
           <span class="text-blue text-[24px] font-bold">User</span>
         </button>
 
@@ -50,7 +50,7 @@
               : 'bg-gray-200 text-gray-800 text-left'
           ]">{{ msg.content }}</div>
 
-          <img v-if="msg.role === 'user'" src="https://i.pravatar.cc/40?u=user" alt="User Avatar"
+          <img v-if="msg.role === 'user'" src="https://i.pravatar.cc/40?u=e" alt="User Avatar"
             class="w-12 h-12 rounded-full border-2 border-white shadow ml-2" />
         </div>
       </div>
@@ -79,9 +79,9 @@
         <div class="h-16"></div>
         <nav>
           <ul>
-            <li class="mb-3"><a href="#" class="text-gray-800 hover:text-indigo-600">Dashboard</a></li>
-            <li class="mb-3"><a href="#" class="text-gray-800 hover:text-indigo-600">Profile</a></li>
-            <li class="mb-3"><a href="#" class="text-gray-800 hover:text-indigo-600">Settings</a></li>
+            <li class="mb-3"><a href="#" class="text-gray-800 hover:text-indigo-600">Label1</a></li>
+            <li class="mb-3"><a href="#" class="text-gray-800 hover:text-indigo-600">Label2</a></li>
+            <li class="mb-3"><a href="#" class="text-gray-800 hover:text-indigo-600">Label3</a></li>
           </ul>
         </nav>
       </aside>
@@ -105,6 +105,7 @@ const canSend = ref(true);
 const cooldown = ref(0);
 let cooldownTimer = null;
 const messageContainer = ref('');
+const chatToken = ref("");
 
 function toggleDropdown() {
   dropdownOpen.value = !dropdownOpen.value;
@@ -114,7 +115,19 @@ function toggleSidebar() {
   sidebarOpen.value = !sidebarOpen.value;
 }
 
-function handleLogout() {
+async function handleLogout() {
+  const savedToken = localStorage.getItem("chat_token");
+  try {
+    await fetch('http://127.0.0.1:8000/api/chat/end', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: savedToken, query:"" }),
+    });
+  } catch (err) {
+    console.error("發送聊天結束通知失敗", err);
+  }
+
+  localStorage.removeItem("chat_token");
   localStorage.removeItem("auth");
   router.push({ name: "login" });
 }
@@ -130,6 +143,27 @@ function handleClickOutside(event) {
   }
 }
 
+function generateRandomToken(length = 16) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+onMounted(() => {
+  const savedToken = localStorage.getItem("chat_token");
+  if (savedToken) {
+    chatToken.value = savedToken;
+  } else {
+    const newToken = generateRandomToken();
+    localStorage.setItem("chat_token", newToken);
+    chatToken.value = newToken;
+  }
+  console.log(chatToken.value);
+});
+
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
 });
@@ -140,10 +174,12 @@ onBeforeUnmount(() => {
 
 async function sendMessage() {
   const message = messageInput.value.trim();
+  const token = localStorage.getItem("chat_token");
+
   if (!message || !canSend.value) return;
 
   canSend.value = false;
-  cooldown.value = 30;
+  cooldown.value = 10;
 
   cooldownTimer = setInterval(() => {
     cooldown.value--;
@@ -160,10 +196,11 @@ async function sendMessage() {
   scrollToBottom();
 
   try {
-    const res = await fetch('http://108.61.126.125:8000/api/chat', {
+    const res = await fetch('http://127.0.0.1:8000/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        token: token,
         query: message,
         history: messages.value
       })
@@ -174,6 +211,7 @@ async function sendMessage() {
     if (data) {
       // messages.value.push({ role: 'assistant', content: data.user_summary });
       // messages.value.push({ role: 'assistant', content: data.ai_summary });
+      console.log({ content: data.ai_summary, content: data.user_summary,content: data.token });
       messages.value.push({ role: 'assistant', content: data.response });
     } else {
       messages.value.push({ role: 'assistant', content: '⚠️ 沒有收到有效的回應。' });
