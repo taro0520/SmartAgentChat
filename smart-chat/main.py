@@ -26,7 +26,15 @@ app.add_middleware(
 def load_histories():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+            try:
+                data = json.load(f)
+                if "user" not in data:
+                    data["user"] = {}
+                if "ai" not in data:
+                    data["ai"] = {}
+                return data
+            except json.JSONDecodeError:
+                pass
     return {"user": {}, "ai": {}}
 
 def save_histories(data):
@@ -45,7 +53,7 @@ class ChatRequest(BaseModel):
 def chat(request: ChatRequest):
     token = request.token
     query = request.query
-
+    print(token)
     if token not in user_histories:
         user_histories[token] = []
     if token not in ai_histories:

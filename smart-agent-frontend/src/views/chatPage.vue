@@ -161,7 +161,7 @@ onMounted(() => {
     localStorage.setItem("chat_token", newToken);
     chatToken.value = newToken;
   }
-  console.log(chatToken.value);
+  // console.log(chatToken.value);
 });
 
 onMounted(() => {
@@ -211,7 +211,7 @@ async function sendMessage() {
     if (data) {
       // messages.value.push({ role: 'assistant', content: data.user_summary });
       // messages.value.push({ role: 'assistant', content: data.ai_summary });
-      console.log({ content: data.ai_summary, content: data.user_summary,content: data.token });
+      // console.log({ content: data.ai_summary, content: data.user_summary,content: data.token });
       messages.value.push({ role: 'assistant', content: data.response });
     } else {
       messages.value.push({ role: 'assistant', content: '⚠️ 沒有收到有效的回應。' });
