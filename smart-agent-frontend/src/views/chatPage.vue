@@ -55,10 +55,7 @@
       <div class="w-full max-w-4xl mt-6 fixed bottom-10">
         <div class="flex items-center bg-white rounded-full shadow px-4 py-2 space-x-2">
           <button class="text-gray-500 hover:text-indigo-600 focus:outline-none" @click="triggerFileSelect">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9.75 3v3.75M9.75 3a6.75 6.75 0 100 13.5H21M21 3v3.75M21 3a6.75 6.75 0 01-13.5 0H3" />
-            </svg>
+            <img src="../assets/pdf.png" class="h-6 w-6" alt="icon" />
           </button>
 
           <input type="file" ref="fileInput" class="hidden" accept="application/pdf" @change="uploadPDF" />
@@ -132,10 +129,10 @@ const uploadPDF = async (event) => {
     });
 
     const data = await res.json();
-    messages.value.push({ role: 'assistant', content: `📄 Uploaded file: ${data.filename}` });
+    messages.value.push({ role: 'assistant', content: `Uploaded file success.` });
   } catch (err) {
     console.error("Upload failed", err);
-    messages.value.push({ role: 'assistant', content: `❌ Upload failed: ${err.message}` });
+    messages.value.push({ role: 'assistant', content: `❌ Upload failed.` });
   }
 };
 
