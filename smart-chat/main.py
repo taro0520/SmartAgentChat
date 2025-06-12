@@ -1,16 +1,17 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from agent.summarize_agent import generate_summary
-from agent.chat_agent import respond_with_summary_context
-from typing import Dict, List
-import uuid
-import json
+from typing import Dict
+from agent.chat_agent import get_agent, memory_store
+import logging
 import os
+import glob
 
-DATA_FILE = "chat_history.json"
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
+UPLOAD_DIR = "./upload"
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,30 +21,7 @@ app.add_middleware(
     allow_credentials=True,
 )
 
-# user_histories: Dict[str, List[str]] = {}
-# ai_histories: Dict[str, List[str]] = {}
-
-def load_histories():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            try:
-                data = json.load(f)
-                if "user" not in data:
-                    data["user"] = {}
-                if "ai" not in data:
-                    data["ai"] = {}
-                return data
-            except json.JSONDecodeError:
-                pass
-    return {"user": {}, "ai": {}}
-
-def save_histories(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-chat_data = load_histories()
-user_histories = chat_data["user"]
-ai_histories = chat_data["ai"]
+agent_store: Dict[str, object] = {}
 
 class ChatRequest(BaseModel):
     token: str
@@ -53,37 +31,51 @@ class ChatRequest(BaseModel):
 def chat(request: ChatRequest):
     token = request.token
     query = request.query
-    print(token)
-    if token not in user_histories:
-        user_histories[token] = []
-    if token not in ai_histories:
-        ai_histories[token] = []
 
-    # update history
-    user_histories[token].append(query)
-    if len(user_histories[token]) > 5:
-        user_histories[token].pop(0)
+    logger.info(f"[REQUEST] Token: {token}, Query: {query}")
 
-    # get summary
-    user_summary = generate_summary("使用者", user_histories[token])
-    ai_summary = generate_summary("AI", ai_histories[token])
+    if token not in agent_store:
+        logger.info(f"[AGENT] New agent created for token: {token}")
 
-    # send message and get reply
-    reply = respond_with_summary_context(user_summary, ai_summary, query)
+        agent_store[token] = get_agent(token)
 
-    ai_histories[token].append(reply)
-    if len(ai_histories[token]) > 5:
-        ai_histories[token].pop(0)
-    
-    save_histories({"user": user_histories, "ai": ai_histories})
+    agent = agent_store[token]
+    result = agent.invoke({"input": query})
+    reply = result["output"]
 
-    return {"user_summary": user_summary, "ai_summary": ai_summary,"response": reply, "token": token}
+    logger.info(f"[RESPONSE] Token: {token}, Reply: {reply}")
+
+    return {"response": reply, "token": token}
 
 @app.post("/api/chat/end")
 def end_chat(request: ChatRequest):
     token = request.token
-    user_histories.pop(token, None)
-    ai_histories.pop(token, None)
-    save_histories({"user": user_histories, "ai": ai_histories})
+    agent_store.pop(token, None)
+    memory_store.pop(token, None)
+
+    deleted_files = []
+    pattern = os.path.join(UPLOAD_DIR, f"{token}_*")
+
+    for file_path in glob.glob(pattern):
+        try:
+            os.remove(file_path)
+            deleted_files.append(os.path.basename(file_path))
+        except Exception as e:
+            logger.error(f"[DELETE FAILED] {file_path}: {e}")
+    
+    logger.info(f"[SESSION ENDED] Token: {token}, Deleted Files: {deleted_files}")
+
     return {"status": "ended"}
 
+@app.post("/api/chat/upload")
+async def upload_pdf(file: UploadFile = File(...), token: str = Form(...)):
+    filename = f"{token}_{file.filename}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+
+    with open(file_path, "wb") as f:
+        content = await file.read()
+        f.write(content)
+
+    logger.info(f"[UPLOAD] Token: {token}, File: {filename}")
+
+    return {"status": "uploaded", "filename": filename}    
