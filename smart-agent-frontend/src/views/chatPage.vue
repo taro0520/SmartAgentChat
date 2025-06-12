@@ -17,14 +17,11 @@
 
       <div class="relative" ref="dropdownRef">
         <button @click="toggleDropdown" class="flex items-center space-x-2 focus:outline-none">
-          <img src="https://i.pravatar.cc/40?u=e" class="w-12 h-12 rounded-full border-2 border-white shadow" alt="Avatar" />
+          <img src="../assets/user.png" class="w-12 h-12 rounded-full border-1 border-white shadow" alt="Avatar" />
           <span class="text-blue text-[24px] font-bold">User</span>
         </button>
 
         <div v-if="dropdownOpen" class="absolute right-0 mt-2 w-full bg-white rounded-lg shadow-lg py-2 z-50">
-          <button class="block w-full text-left px-4 py-2 text-lg hover:bg-gray-100" @click="goToSettings">
-            Settings
-          </button>
           <button class="block w-full text-left px-4 py-2 text-lg hover:bg-gray-100" @click="handleLogout">
             Logout
           </button>
@@ -40,8 +37,8 @@
           msg.role === 'user' ? 'justify-end' : 'justify-start'
         ]">
 
-          <img v-if="msg.role !== 'user'" src="https://i.pravatar.cc/40?u=agent" alt="Agent Avatar"
-            class="w-12 h-12 rounded-full border-2 border-white shadow mr-1" />
+          <img v-if="msg.role !== 'user'" src="../assets/bot.png" alt="Agent Avatar"
+            class="w-12 h-12 rounded-full border-1 border-white shadow mr-1" />
 
           <div :class="[
             'rounded-lg p-4 max-w-lg whitespace-pre-wrap',
@@ -50,25 +47,27 @@
               : 'bg-gray-200 text-gray-800 text-left'
           ]">{{ msg.content }}</div>
 
-          <img v-if="msg.role === 'user'" src="https://i.pravatar.cc/40?u=e" alt="User Avatar"
-            class="w-12 h-12 rounded-full border-2 border-white shadow ml-2" />
+          <img v-if="msg.role === 'user'" src="../assets/user.png" alt="User Avatar"
+            class="w-12 h-12 rounded-full border-1 border-white shadow ml-2" />
         </div>
       </div>
 
       <div class="w-full max-w-4xl mt-6 fixed bottom-10">
         <div class="flex items-center bg-white rounded-full shadow px-4 py-2 space-x-2">
-          <button class="text-gray-500 hover:text-indigo-600 focus:outline-none">
+          <button class="text-gray-500 hover:text-indigo-600 focus:outline-none" @click="triggerFileSelect">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9.75 3v3.75M9.75 3a6.75 6.75 0 100 13.5H21M21 3v3.75M21 3a6.75 6.75 0 01-13.5 0H3" />
             </svg>
           </button>
 
-          <input v-model="messageInput" @keyup.enter="sendMessage" placeholder="輸入訊息..."
+          <input type="file" ref="fileInput" class="hidden" accept="application/pdf" @change="uploadPDF" />
+
+          <input v-model="messageInput" @keyup.enter="sendMessage" placeholder="Input message..."
             class="flex-1 bg-transparent focus:outline-none text-lg" />
           <button @click="sendMessage"
             class="text-white bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-full text-sm font-semibold disabled:opacity-50">
-            {{ canSend ? '送出' : `${cooldown} 秒...` }}
+            {{ canSend ? 'Send' : `${cooldown} sec...` }}
           </button>
         </div>
       </div>
@@ -93,6 +92,8 @@
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useRouter } from "vue-router";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const router = useRouter();
 
 const dropdownOpen = ref(false);
@@ -107,6 +108,37 @@ let cooldownTimer = null;
 const messageContainer = ref('');
 const chatToken = ref("");
 
+const fileInput = ref(null);
+
+function triggerFileSelect() {
+  if (fileInput.value) {
+    fileInput.value.value = null;
+    fileInput.value.click();
+  }
+}
+
+const uploadPDF = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("token", chatToken.value);
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/chat/upload`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    messages.value.push({ role: 'assistant', content: `📄 Uploaded file: ${data.filename}` });
+  } catch (err) {
+    console.error("Upload failed", err);
+    messages.value.push({ role: 'assistant', content: `❌ Upload failed: ${err.message}` });
+  }
+};
+
 function toggleDropdown() {
   dropdownOpen.value = !dropdownOpen.value;
 }
@@ -118,23 +150,18 @@ function toggleSidebar() {
 async function handleLogout() {
   const savedToken = localStorage.getItem("chat_token");
   try {
-    await fetch('http://127.0.0.1:8000/api/chat/end', {
+    await fetch(`${API_BASE_URL}/chat/end`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: savedToken, query:"" }),
+      body: JSON.stringify({ token: savedToken, query: "" }),
     });
   } catch (err) {
-    console.error("發送聊天結束通知失敗", err);
+    console.error("Logout error", err);
   }
 
   localStorage.removeItem("chat_token");
   localStorage.removeItem("auth");
   router.push({ name: "login" });
-}
-
-function goToSettings() {
-  alert("Go to settings");
-  dropdownOpen.value = false;
 }
 
 function handleClickOutside(event) {
@@ -161,7 +188,7 @@ onMounted(() => {
     localStorage.setItem("chat_token", newToken);
     chatToken.value = newToken;
   }
-  // console.log(chatToken.value);
+  console.log(chatToken.value);
 });
 
 onMounted(() => {
@@ -196,7 +223,7 @@ async function sendMessage() {
   scrollToBottom();
 
   try {
-    const res = await fetch('http://127.0.0.1:8000/api/chat', {
+    const res = await fetch(`${API_BASE_URL}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -214,11 +241,11 @@ async function sendMessage() {
       // console.log({ content: data.ai_summary, content: data.user_summary,content: data.token });
       messages.value.push({ role: 'assistant', content: data.response });
     } else {
-      messages.value.push({ role: 'assistant', content: '⚠️ 沒有收到有效的回應。' });
+      messages.value.push({ role: 'assistant', content: '⚠️ No valid response received.' });
     }
   } catch (error) {
     console.error('Error:', error);
-    messages.value.push({ role: 'assistant', content: '❌ 發送訊息時發生錯誤。' });
+    messages.value.push({ role: 'assistant', content: '❌ Error occurred while sending the message.' });
   }
 
   await nextTick();
