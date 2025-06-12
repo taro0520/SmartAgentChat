@@ -1,9 +1,11 @@
 langchain
 langchain-community
 langchain-google-genai
+langchain-huggingface
+sentence-transformers
 chromadb
-duckduckgo-search
+pymupdf
 python-dotenv
-fastapi
-load_dotenv
 python-multipart
+fastapi
+duckduckgo-search
