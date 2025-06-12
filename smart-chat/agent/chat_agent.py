@@ -7,6 +7,7 @@ from langchain_community.utilities.searx_search import SearxSearchWrapper
 from llm_provider import llm
 from typing import Dict
 from agent.tool_agent import variable_tool
+from agent.pdf_search_tool import search_uploaded_pdf_tool
 import os
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -15,45 +16,6 @@ logger = logging.getLogger(__name__)
 searx_tool = SearxSearchResults(
     wrapper=SearxSearchWrapper(searx_host=os.getenv("SEARXNG_URL"))
 )
-
-TOOLS = [
-    Tool(
-        name="search_software",
-        func=searx_tool.run,
-        description="Use this tool when the user asks about specific software, its features, download options, or comparisons."
-    ),
-    Tool(
-        name="search_website",
-        func=searx_tool.run,
-        description="Use this tool when the user mentions a website, platform, web service, or needs to find a web page or official link."
-    ),
-    Tool(
-        name="search_date_time",
-        func=searx_tool.run,
-        description="Use this tool when the user asks about specific dates, schedules, timelines, or time-related details of an event or service."
-    ),
-    Tool(
-        name="search_price",
-        func=searx_tool.run,
-        description="Use this tool when the user inquires about pricing, subscription plans, product costs, or any fee-related information."
-    ),
-    Tool(
-        name="search_event",
-        func=searx_tool.run,
-        description="Use this tool when the user asks about events, conferences, talks, competitions, or other happenings."
-    ),
-    Tool(
-        name="search_news",
-        func=searx_tool.run,
-        description="Use this tool when the user asks about current news, trending topics, updates, or public announcements."
-    ),
-    Tool(
-        name="search_tutorial",
-        func=searx_tool.run,
-        description="Use this tool when the user requests tutorials, how-to guides, step-by-step instructions, or learning resources."
-    ),
-    variable_tool
-]
 
 CUSTOM_PROMPT_TEMPLATE = """
 You are an AI assistant with access to the following tools:
@@ -92,6 +54,48 @@ custom_prompt = PromptTemplate(
 memory_store: Dict[str, ConversationBufferMemory] = {}
 
 def get_agent(token: str):
+    
+    TOOLS = [
+        search_uploaded_pdf_tool(token),
+        Tool(
+            name="search_software",
+            func=searx_tool.run,
+            description="Use this tool when the user asks about specific software, its features, download options, or comparisons."
+        ),
+        Tool(
+            name="search_website",
+            func=searx_tool.run,
+            description="Use this tool when the user mentions a website, platform, web service, or needs to find a web page or official link."
+        ),
+        Tool(
+            name="search_date_time",
+            func=searx_tool.run,
+            description="Use this tool when the user asks about specific dates, schedules, timelines, or time-related details of an event or service."
+        ),
+        Tool(
+            name="search_price",
+            func=searx_tool.run,
+            description="Use this tool when the user inquires about pricing, subscription plans, product costs, or any fee-related information."
+        ),
+        Tool(
+            name="search_event",
+            func=searx_tool.run,
+            description="Use this tool when the user asks about events, conferences, talks, competitions, or other happenings."
+        ),
+        Tool(
+            name="search_news",
+            func=searx_tool.run,
+            description="Use this tool when the user asks about current news, trending topics, updates, or public announcements."
+        ),
+        Tool(
+            name="search_tutorial",
+            func=searx_tool.run,
+            description="Use this tool when the user requests tutorials, how-to guides, step-by-step instructions, or learning resources."
+        ),
+        variable_tool
+    ]
+
+
     if token not in memory_store:
         memory = ConversationBufferMemory(
             memory_key="chat_history",
