@@ -6,3 +6,4 @@ duckduckgo-search
 python-dotenv
 fastapi
 load_dotenv
+python-multipart
