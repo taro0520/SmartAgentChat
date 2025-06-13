@@ -14,7 +14,7 @@ PDF_DIR = "./upload"
 
 # Handle PDF search function.
 class PDFSearchManager:
-    def __init__(self):
+    def __init__(self) -> None:
         # Load embedding model for converting text to vectors.
         self.embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
@@ -24,7 +24,7 @@ class PDFSearchManager:
                 if f.startswith(f"{token}_") and f.endswith(".pdf")]
 
     # Load and parse the documents from filepaths into LangChain document objects.
-    def load_documents(self, filepaths: List[str]):
+    def load_documents(self, filepaths: List[str]) -> List[Document]:
         docs = []
         for path in filepaths:
             loader = PyMuPDFLoader(path)

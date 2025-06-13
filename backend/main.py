@@ -36,7 +36,7 @@ class ChatRequest(BaseModel):
 
 # Handle chat message.
 @app.post("/api/chat")
-def chat(request: ChatRequest):
+def chat(request: ChatRequest) -> Dict[str, str]:
     token = request.token
     query = request.query
 
@@ -57,7 +57,7 @@ def chat(request: ChatRequest):
 
 # End a chat session and clean up memory and uploaded files.
 @app.post("/api/chat/end")
-def end_chat(request: ChatRequest):
+def end_chat(request: ChatRequest) -> Dict[str, str]:
     token = request.token
 
     # Remove agent and memory.
@@ -81,7 +81,7 @@ def end_chat(request: ChatRequest):
 
 # Handle PDF files upload.
 @app.post("/api/chat/upload")
-async def upload_pdf(file: UploadFile = File(...), token: str = Form(...)):
+async def upload_pdf(file: UploadFile = File(...), token: str = Form(...)) -> Dict[str, str]:
     filename = f"{token}_{file.filename}"
     file_path = os.path.join(UPLOAD_DIR, filename)
 

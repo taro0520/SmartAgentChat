@@ -3,7 +3,7 @@ from langchain.agents import Tool
 
 # Handle storing and calculating simple variables and expressions.
 class VariableManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self.vars = {}
 
     # Set a single variable using an expression like 'A = 1'.

@@ -1,5 +1,5 @@
 # Import necessary libraries.
-from langchain.agents import Tool, initialize_agent, AgentType
+from langchain.agents import Tool, initialize_agent, AgentType, AgentExecutor
 from langchain_core.prompts import PromptTemplate
 from langchain_core.chat_history import InMemoryChatMessageHistory
 from langchain.memory import CombinedMemory, ConversationBufferMemory, ConversationSummaryMemory
@@ -60,7 +60,7 @@ custom_prompt = PromptTemplate(
 memory_store: Dict[str, ConversationBufferMemory] = {}
 
 # Initializae an agent by user token.
-def get_agent(token: str):
+def get_agent(token: str) -> AgentExecutor:
     # Define tools available to the agent.
     TOOLS = [
         search_uploaded_pdf_tool(token),
