@@ -7,7 +7,7 @@ from langchain_community.tools.searx_search.tool import SearxSearchResults
 from langchain_community.utilities.searx_search import SearxSearchWrapper
 from llm_provider import llm
 from typing import Dict
-from agent.tool_agent import variable_tool
+from agent.variable_tool import variable_tool
 from agent.pdf_search_tool import search_uploaded_pdf_tool
 import os
 import logging
