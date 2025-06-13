@@ -85,7 +85,7 @@ npm run dev
 
 ## Images
 
-![Login](./other/login.png)
+![Login](./other/login.png =300x300)
 ![Home](./other/home.png)
 ![Chat1](./other/chat1.png)
 ![Chat2](./other/chat2.png)
