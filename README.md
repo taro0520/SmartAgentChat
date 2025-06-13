@@ -85,7 +85,7 @@ npm run dev
 
 ## Images
 
-![Login](./other/login.png)
-![Home](./other/home.png)
-![Chat1](./other/chat1.png)
-![Chat2](./other/chat2.png)
+<img src="./other/login.png" alt="Login" width="300" height="200" />
+<img src="./other/home.png" alt="Home" width="300" height="200" />
+<img src="./other/chat1.png" alt="Chat1" width="300" height="200" />
+<img src="./other/chat2.png" alt="Chat2" width="300" height="200" />
