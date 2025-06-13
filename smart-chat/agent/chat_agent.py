@@ -1,3 +1,4 @@
+# Import necessary libraries.
 from langchain.agents import Tool, initialize_agent, AgentType
 from langchain_core.prompts import PromptTemplate
 from langchain_core.chat_history import InMemoryChatMessageHistory
@@ -10,13 +11,17 @@ from agent.tool_agent import variable_tool
 from agent.pdf_search_tool import search_uploaded_pdf_tool
 import os
 import logging
+
+# Set up basic logging configuration.
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Initialize searx tool with URL from environment variable.
 searx_tool = SearxSearchResults(
     wrapper=SearxSearchWrapper(searx_host=os.getenv("SEARXNG_URL"))
 )
 
+# Define a custom prompt template for the ReAct agent.
 CUSTOM_PROMPT_TEMPLATE = """
 You are an AI assistant with access to the following tools:
 
@@ -25,7 +30,6 @@ You are an AI assistant with access to the following tools:
 Rules:
 - If you know the answer from your own knowledge or conversation history, give the final answer directly.
 - Use tools ONLY when you cannot answer confidently.
-- Use 'ask_for_clarification' tool ONLY if the user input is ambiguous or incomplete.
 
 When you respond, ONLY use one of the following formats:
 
@@ -46,56 +50,36 @@ User input:
 Thought:
 """
 
+# Create a prompt template instance with the custom ReAct template.
 custom_prompt = PromptTemplate(
     input_variables=["input", "chat_history", "agent_scratchpad", "tool_names", "tools"],
     template=CUSTOM_PROMPT_TEMPLATE
 )
 
+# Store memory instances per user token.
 memory_store: Dict[str, ConversationBufferMemory] = {}
 
+# Initializae an agent by user token.
 def get_agent(token: str):
-    
+    # Define tools available to the agent.
     TOOLS = [
         search_uploaded_pdf_tool(token),
         Tool(
-            name="search_software",
+            name="search",
             func=searx_tool.run,
-            description="Use this tool when the user asks about specific software, its features, download options, or comparisons."
-        ),
-        Tool(
-            name="search_website",
-            func=searx_tool.run,
-            description="Use this tool when the user mentions a website, platform, web service, or needs to find a web page or official link."
-        ),
-        Tool(
-            name="search_date_time",
-            func=searx_tool.run,
-            description="Use this tool when the user asks about specific dates, schedules, timelines, or time-related details of an event or service."
-        ),
-        Tool(
-            name="search_price",
-            func=searx_tool.run,
-            description="Use this tool when the user inquires about pricing, subscription plans, product costs, or any fee-related information."
-        ),
-        Tool(
-            name="search_event",
-            func=searx_tool.run,
-            description="Use this tool when the user asks about events, conferences, talks, competitions, or other happenings."
-        ),
-        Tool(
-            name="search_news",
-            func=searx_tool.run,
-            description="Use this tool when the user asks about current news, trending topics, updates, or public announcements."
-        ),
-        Tool(
-            name="search_tutorial",
-            func=searx_tool.run,
-            description="Use this tool when the user requests tutorials, how-to guides, step-by-step instructions, or learning resources."
+            description=(
+                "Use this tool to search for any kind of information available on the web. "
+                "This includes, but is not limited to: details about specific software (features, comparisons, download options), "
+                "websites or online platforms (official links, web services), pricing and subscription plans for products or services, "
+                "event-related information (dates, schedules, conferences, or competitions), current news or trending topics, "
+                "as well as tutorials, guides, or how-to instructions. Use this tool when the user's query requires retrieving "
+                "up-to-date information from online sources."
+            )
         ),
         variable_tool
     ]
 
-
+    # Create new memory instance if this token hasn't been seen before.
     if token not in memory_store:
         memory = ConversationBufferMemory(
             memory_key="chat_history",
@@ -109,6 +93,8 @@ def get_agent(token: str):
         logger.info(f"[MEMORY] Reused memory for token: {token}, Memory ID: {id(memory)}")
 
     logger.info(f"[MEMORY DETAIL] ChatMemory ID: {id(memory.chat_memory)}")
+    
+    # Initialize and return a LangChain ReAct agent with memory and tools.
     return initialize_agent(
         tools=TOOLS,
         llm=llm,

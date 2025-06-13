@@ -1,3 +1,4 @@
+# Import necessary libraries.
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -7,11 +8,15 @@ import logging
 import os
 import glob
 
+# Set up basic logging configuration.
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+# The directory where uploaded files will be stored.
 UPLOAD_DIR = "./upload"
+
+# Initialize the FastAPI.
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,12 +26,15 @@ app.add_middleware(
     allow_credentials=True,
 )
 
+# Store agent instances per user token.
 agent_store: Dict[str, object] = {}
 
+# Define the structure of the chat request body.
 class ChatRequest(BaseModel):
     token: str
     query: str
 
+# Handle chat message.
 @app.post("/api/chat")
 def chat(request: ChatRequest):
     token = request.token
@@ -47,12 +55,16 @@ def chat(request: ChatRequest):
 
     return {"response": reply, "token": token}
 
+# End a chat session and clean up memory and uploaded files.
 @app.post("/api/chat/end")
 def end_chat(request: ChatRequest):
     token = request.token
+
+    # Remove agent and memory.
     agent_store.pop(token, None)
     memory_store.pop(token, None)
 
+    # Delete uploaded files by token.
     deleted_files = []
     pattern = os.path.join(UPLOAD_DIR, f"{token}_*")
 
@@ -67,6 +79,7 @@ def end_chat(request: ChatRequest):
 
     return {"status": "ended"}
 
+# Handle PDF files upload.
 @app.post("/api/chat/upload")
 async def upload_pdf(file: UploadFile = File(...), token: str = Form(...)):
     filename = f"{token}_{file.filename}"
