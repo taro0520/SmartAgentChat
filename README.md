@@ -47,7 +47,6 @@ The backend handles AI reasoning logic, including Gemini API integration, PDF kn
 ## Project Structure
 
 <pre><code>
-```
 backend/
 ├── .env
 ├── requirements.txt
@@ -65,7 +64,6 @@ frontend/
 │ │ ├── chatpage.vue
 │ │ └── loginpage.vue
 │ └── assets/
-```
 </code></pre>
 
 ## Installation
@@ -74,14 +72,13 @@ frontend/
 
 1. Install dependencies via `pip install -r requirements.txt`.
 2. Create a `.env` file with your Gemini API key, Gemini model, use agent type and searxng url.
-3. Run the backend server with:
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+3. Run the backend server with
+`uvicorn main:app --reload --host 0.0.0.0 --port 8000`
 
 ### Frontend Setup
 
 1. Install dependencies via `npm install`.
-2. Run the frontend dev server with:
-npm run dev
+2. Run the frontend dev server with `npm run dev`.
 
 ## Images
 
