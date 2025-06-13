@@ -46,6 +46,8 @@ The backend handles AI reasoning logic, including Gemini API integration, PDF kn
 
 ## Project Structure
 
+<pre><code>
+```
 backend/
 ├── .env
 ├── requirements.txt
@@ -63,6 +65,8 @@ frontend/
 │ │ ├── chatpage.vue
 │ │ └── loginpage.vue
 │ └── assets/
+```
+</code></pre>
 
 ## Installation
 
