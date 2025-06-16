@@ -80,7 +80,13 @@ frontend/
 1. Install dependencies via `npm install`.
 2. Run the frontend dev server with `npm run dev`.
 
-## Images
+## Demo
+
+Test URL : <a href="http://108.61.126.125/">http://108.61.126.125/</a>
+
+Account  : user
+
+Password : $1234
 
 <table>
   <tr>
