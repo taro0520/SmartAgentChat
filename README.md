@@ -82,12 +82,6 @@ frontend/
 
 ## Demo
 
-Test URL : <a href="http://108.61.126.125/">http://108.61.126.125/</a>
-
-Account  : user
-
-Password : $1234
-
 <table>
   <tr>
     <td><img src="./other/login.png" alt="Login" width="400" height="300" /></td>
